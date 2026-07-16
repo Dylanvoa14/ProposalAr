@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <meta name="theme-color" content="#0b0d10" />
+  <title>LA MESA · Temporada 1</title>
+  <meta name="description" content="Una serie sobre un grupo que no sabía que era una serie." />
+  <meta name="robots" content="noindex, nofollow" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div id="devBadge" class="dev-badge hidden">MODO DEV</div>
+
+  <main id="home" class="home">
+    <header class="hero">
+      <p class="hero-tag">estreno exclusivo · una sola espectadora</p>
+      <h1 class="logo">LA&nbsp;MESA</h1>
+      <p class="hero-sub">Temporada 1 · Una serie sobre un grupo que no sabía que era una serie.</p>
+      <div class="hero-meta">
+        <span class="badge">7 episodios</span>
+        <span class="badge">estreno diario · 12:00 a.m.</span>
+        <span class="badge badge-accent" id="progressBadge"></span>
+      </div>
+    </header>
+
+    <section class="episodes" id="episodeList" aria-label="Episodios"></section>
+
+    <section class="shelf hidden" id="shelf" aria-label="Tarjetas de la temporada">
+      <h2 class="shelf-title">Tarjetas de la temporada</h2>
+      <p class="shelf-sub">Cada episodio deja una. Colecciónalas.</p>
+      <div class="shelf-cards" id="shelfCards"></div>
+    </section>
+
+    <footer class="foot">
+      <p>LA MESA · una producción independiente · Lima</p>
+    </footer>
+  </main>
+
+  <!-- Reproductor de episodios -->
+  <div id="player" class="player hidden" role="dialog" aria-modal="true">
+    <button id="closePlayer" class="player-close" aria-label="Volver">✕</button>
+    <div id="playerContent" class="player-content"></div>
+  </div>
+
+  <script src="content.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
