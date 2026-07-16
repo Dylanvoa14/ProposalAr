@@ -2,11 +2,13 @@
    LA MESA — Temporada 1
    TODO EL CONTENIDO EDITABLE ESTÁ EN ESTE ARCHIVO.
    Dylan: cambia textos aquí sin tocar app.js ni index.html.
+   Orden cronológico real: origen → parque → Friday's → cine →
+   fiesta/TLOU → presente → final.
    ============================================================ */
 
 const CONFIG = {
-  // Clave del modo desarrollador: abre la web con  ?dev=lamesa67  para
-  // desbloquear todo y probar. Con ?dev=off se desactiva.
+  // Modo desarrollador: abre la web con ?dev=lamesa67 para desbloquear
+  // todo y probar. Con ?dev=off se desactiva.
   devKey: "lamesa67",
 
   // ---- FINAL DE TEMPORADA (puedes cambiarlo hasta el día 6) ----
@@ -28,6 +30,11 @@ const CONFIG = {
    Las fechas están en UTC: 00:00 Lima = 05:00 UTC. */
 
 const EPISODES = [
+  /* ------------------------------------------------------------
+     E1 · PILOTO — el origen (hace ~1 año)
+     Mecánica: partido de ping pong jugable. Cada peloteo que ella
+     gana revela un capítulo de la historia.
+     ------------------------------------------------------------ */
   {
     num: 1,
     title: "Piloto",
@@ -36,80 +43,110 @@ const EPISODES = [
     accent: "#7fb4c9",
     synopsis: "Cuatro tipos, una mesa de ping pong y una interrupción no solicitada.",
     lockedHint: "Disponible el 16 de julio",
-    // Interacción: tocar la pelota de ping pong hace avanzar la historia
+    type: "pong",
+    intro: "Para entender esta historia hay que ganarse cada punto. Juega.",
+    rallies: 5, // devoluciones necesarias
     vignettes: [
-      "Había una vez cuatro tipos y una mesa de ping pong: Gianfranco, César, Ignacio y yo.",
-      "Éramos un grupo cerrado. Nadie entraba. Nadie salía. Solo ping pong.",
-      "Hasta que un día, un grupo de chicas se acercó a jugar. Spoiler: no fue por el ping pong.",
+      "Había una vez cuatro tipos y una mesa de ping pong: Gianfranco, César, Ignacio y yo. Grupo cerrado. Solo ping pong.",
+      "Un día, un grupo de chicas se acercó a jugar. Spoiler: no fue por el ping pong.",
       "Fue porque a una de ellas le gustaba Ignacio. En serio. Así de random empezó todo.",
+      "Poco a poco los dos grupos se volvieron uno. Nadie lo decidió: simplemente pasó.",
       "Y en ese grupo venía una niña que, sin que nadie lo planeara, se iba a volver mi mejor amiga.",
     ],
     quote: "A veces la vida te cambia de mesa sin avisar.",
     hiddenWord: "vida",
-    teaser: "Próximo episodio: alguien jura que come un montón. La evidencia dirá lo contrario.",
+    teaser: "Próximo episodio: dos personajes, un parque, cero efectos especiales. El favorito de la crítica.",
   },
+
+  /* ------------------------------------------------------------
+     E2 · EL EPISODIO TRANQUILO — el parque (la primera
+     conversación real, cronológicamente antes que todo lo demás)
+     Mecánica: scroll cinematográfico — la noche avanza, aparecen
+     estrellas y luciérnagas, y al fondo la máquina y los heyfit.
+     ------------------------------------------------------------ */
   {
     num: 2,
-    title: "En el que nos dolió la barriga",
-    genre: "Sitcom",
+    title: "El episodio tranquilo",
+    genre: "Bottle episode",
     unlockISO: "2026-07-17T05:00:00Z",
-    accent: "#e5c46b",
-    synopsis: "Grabado frente a un público en vivo (nosotros mismos).",
+    accent: "#9a8fd1",
+    synopsis: "Dos personajes, una locación. No pasa nada. Pasa todo.",
     lockedHint: "Disponible el 17 de julio",
-    // Interacción: botón de risas — cada tanda de risas avanza la escena
-    scenes: [
-      "UBICACIÓN: Friday's. ELENCO: nosotros. PRESUPUESTO: cuestionable.",
-      "Ella dijo que tenía hambre. Que iba a comer UN MONTÓN. Palabras textuales.",
-      "El plato llegó. El plato casi se fue igual que llegó. El jurado tiene su veredicto.",
-      "No me acuerdo ni de la mitad de las cosas de las que nos reímos esa noche.",
-      "Solo sé que al día siguiente me seguía doliendo la barriga. De reírme. Eso no pasa con cualquiera.",
+    type: "park",
+    hint: "desliza despacio · la noche avanza contigo",
+    fragments: [
+      "Un parque cerca de mi casa. De noche.",
+      "El plan era simple: comprar cosas para la reunión del grupo. Eso era todo el guion.",
+      "Pero terminamos sentados en la máquina esa de hacer piernas, como si fuera una banca.",
+      "Un heyfit cada uno. Nuestra bebida “favorita”, entre comillas gigantes.",
+      "Hablamos de las cosas que habían dolido. De los ex. De lo que no se cuenta a cualquiera.",
+      "Días después llegó la reunión. Hubo baile. Dato aparentemente irrelevante. Los buenos guiones no desperdician escenas.",
+      "Esa noche en el parque no pasó nada. Y a la vez pasó todo: esta amistad se volvió en serio.",
     ],
-    laughButtonLabel: "risas",
-    quote: "Hay risas que te dejan doliendo la barriga hasta el día siguiente. Las mejores fueron contigo.",
-    hiddenWord: "contigo",
-    teaser: "Próximo episodio: alguien pasa mucho miedo en una sala de cine. No diremos quién.",
+    quote: "Hay conversaciones que te ordenan la cabeza. Esa banca tiene un lugar ganado en mi historia.",
+    hiddenWord: "mi",
+    teaser: "Próximo episodio: grabado frente a un público en vivo (nosotros mismos). Alguien jura que come un montón.",
   },
+
+  /* ------------------------------------------------------------
+     E3 · EN EL QUE NOS DOLIÓ LA BARRIGA — Friday's
+     Mecánica: sitcom con guion que se escribe a máquina y un
+     medidor de risas que ella llena a toques rápidos.
+     ------------------------------------------------------------ */
   {
     num: 3,
+    title: "En el que nos dolió la barriga",
+    genre: "Sitcom",
+    unlockISO: "2026-07-18T05:00:00Z",
+    accent: "#e5c46b",
+    synopsis: "Grabado frente a un público en vivo. El público somos nosotros.",
+    lockedHint: "Disponible el 18 de julio",
+    type: "sitcom",
+    hint: "cuando se encienda el letrero, toca rápido para reír",
+    scenes: [
+      "INT. FRIDAY'S — NOCHE.\nElenco completo en mesa para dos. Presupuesto: cuestionable.",
+      "ELLA (con total seriedad): “Tengo hambre. Voy a comer UN MONTÓN.”\nPalabras textuales. Que conste en acta.",
+      "CORTE A: el plato, casi intacto, mirando a cámara.\nEl jurado tiene su veredicto: comió tres papas y media.",
+      "No recuerdo ni la mitad de las cosas de las que nos reímos esa noche. Nadie las recuerda. Así son las mejores.",
+      "Solo sé que al día siguiente me seguía doliendo la barriga. De reírme. Eso no pasa con cualquiera.",
+    ],
+    quote: "Hay risas que te dejan doliendo la barriga hasta el día siguiente. Las mejores fueron contigo.",
+    hiddenWord: "contigo",
+    teaser: "Próximo episodio: alguien pasa mucho miedo en una sala de cine. No diremos quién. (Fue ella.)",
+  },
+
+  /* ------------------------------------------------------------
+     E4 · LOS PASILLOS — el cine, Backrooms
+     Mecánica: pasillo oscuro con linterna táctil, contador de
+     hallazgos y textura VHS.
+     ------------------------------------------------------------ */
+  {
+    num: 4,
     title: "Los pasillos",
     genre: "Terror",
-    unlockISO: "2026-07-18T05:00:00Z",
+    unlockISO: "2026-07-19T05:00:00Z",
     accent: "#c9d64f",
     synopsis: "Este episodio se ve mejor con las luces apagadas.",
-    lockedHint: "Disponible el 18 de julio",
-    // Interacción: pasillo oscuro, se ilumina con el dedo, hay que encontrar los textos y la salida
+    lockedHint: "Disponible el 19 de julio",
+    type: "hall",
+    hint: "mueve el dedo para iluminar · encuentra los 4 recuerdos",
     wallTexts: [
       "Fuimos al cine a ver Backrooms.",
       "Alguien dijo que las películas de terror no le daban miedo.",
-      "Ese alguien se asustó. Bastante.",
-      "Y yo, como buen mejor amigo, la fastidié por eso durante semanas. Sin arrepentimientos.",
+      "Ese alguien se asustó. Bastante. Hay testigos.",
+      "Y yo, como buen mejor amigo, la fastidié por eso durante semanas. Cero arrepentimiento.",
     ],
     exitLabel: "SALIDA",
     quote: "Al final no importaba encontrar la salida. Importaba seguir caminando acompañado.",
     hiddenWord: "seguir",
-    teaser: "Próximo episodio: no pasa nada. Literalmente nada. Y aun así es de los favoritos de la crítica.",
-  },
-  {
-    num: 4,
-    title: "El episodio tranquilo",
-    genre: "Bottle episode",
-    unlockISO: "2026-07-19T05:00:00Z",
-    accent: "#9a8fd1",
-    synopsis: "Dos personajes, una locación, cero efectos especiales.",
-    lockedHint: "Disponible el 19 de julio",
-    // Interacción: scroll — el cielo se llena de estrellas mientras aparecen los fragmentos
-    fragments: [
-      "Un parque cerca de mi casa. De noche.",
-      "Teníamos que comprar cosas para la reunión del grupo. Eso era el plan, al menos.",
-      "Terminamos sentados en la máquina esa de hacer piernas, como si fuera una banca.",
-      "Un heyfit cada uno. Nuestra bebida “favorita”, entre comillas gigantes.",
-      "Hablamos de cosas que no se hablan con cualquiera. De las que habían dolido.",
-      "Esa noche no pasó nada. Y a la vez pasó todo: esta amistad se volvió en serio.",
-    ],
-    quote: "Hay conversaciones que te ordenan la cabeza. Esa banca de parque tiene un lugar ganado en mi historia.",
-    hiddenWord: "mi",
     teaser: "Próximo episodio: apocalipsis, hongos, y una persona sorprendentemente responsable.",
   },
+
+  /* ------------------------------------------------------------
+     E5 · SUPERVIVENCIA — fiesta de Gianfranco + The Last of Us
+     Mecánica: inventario estilo TLOU con cartas que giran y un
+     chat del directo que corre en vivo.
+     ------------------------------------------------------------ */
   {
     num: 5,
     title: "Supervivencia",
@@ -118,7 +155,8 @@ const EPISODES = [
     accent: "#6fbf8e",
     synopsis: "En un mundo hostil, el inventario lo es todo.",
     lockedHint: "Disponible el 20 de julio",
-    // Interacción: inventario de supervivencia — tocar cada objeto revela su historia
+    type: "inventory",
+    hint: "revisa el equipo · gira cada objeto",
     items: [
       {
         icon: "🎮",
@@ -131,20 +169,37 @@ const EPISODES = [
         text: "La fiesta de Gianfranco. Yo: fuera de combate. Tú: cuidando mis cosas y asegurándote de que no me lastimara. Nunca lo dije bien: gracias.",
       },
       {
-        icon: "📦",
+        icon: "🎒",
         name: "Suministros",
         text: "Dato de supervivencia comprobado: aguantar cualquier apocalipsis es más fácil cuando alguien te cuida la espalda.",
       },
       {
-        icon: "💬",
+        icon: "📻",
         name: "Una señal de radio",
         text: "El chat diario. Contarse todo. Todos los días. Esa señal nunca se ha caído.",
       },
     ],
+    chat: [
+      "buen intento, igual te van a morder",
+      "JAJAJAJA",
+      "cuidado por la izquierda",
+      "no gastes las balas 😤",
+      "esa parte da miedito",
+      "otra vez moriste???",
+      "ya casi, tú puedes",
+      "seguimos mañana? 👀",
+    ],
+    chatUser: "ari",
     quote: "Hay historias que solo quiero terminar si estoy bien acompañado.",
     hiddenWord: "quiero",
     teaser: "Se viene el doble final de temporada: Six... Seven. Ya sabes.",
   },
+
+  /* ------------------------------------------------------------
+     E6 · SIX — el presente: morning, jam, rutina
+     Mecánica: instrumento táctil real — pasar el dedo por las
+     cuerdas de luz produce notas (suena de verdad).
+     ------------------------------------------------------------ */
   {
     num: 6,
     title: "Six",
@@ -153,7 +208,8 @@ const EPISODES = [
     accent: "#d98fb0",
     synopsis: "Primera parte del final de temporada. La rutina también cuenta historias.",
     lockedHint: "Disponible el 21 de julio",
-    // Interacción: ecualizador que reacciona al toque mientras aparecen las líneas
+    type: "jam",
+    hint: "pasa el dedo por las cuerdas · suena de verdad, sube el volumen",
     lines: [
       "Todos los días empiezan igual: “morning”.",
       "Y muchos terminan igual: estudiando con una jam de fondo.",
@@ -164,6 +220,10 @@ const EPISODES = [
     hiddenWord: ",",
     teaser: "Final de temporada: mañana a las 00:00. No llegues tarde.",
   },
+
+  /* ------------------------------------------------------------
+     E7 · SEVEN — final de temporada (la revelación)
+     ------------------------------------------------------------ */
   {
     num: 7,
     title: "Seven",
@@ -172,14 +232,13 @@ const EPISODES = [
     accent: "#e8a15c",
     synopsis: "Todo estaba conectado.",
     lockedHint: "Disponible el 22 de julio",
-    // La revelación usa las tarjetas de los episodios 1-6.
+    type: "finale",
     revealIntro: [
       "Antes del final, un resumen de la temporada.",
       "Cada episodio terminó con una tarjeta.",
       "Quizás no lo notaste, pero las tarjetas guardaban algo.",
       "Mira.",
     ],
-    phrase: ["Quiero", "seguir", "mi", "vida", ",", "contigo"],
     phraseDisplay: "Quiero seguir mi vida, contigo.",
     finalMessage:
       "Ari.\n\n" +
@@ -201,3 +260,4 @@ const EPISODES = [
     ],
   },
 ];
+/* fin del contenido */
