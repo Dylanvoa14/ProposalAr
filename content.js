@@ -24,6 +24,10 @@ const CONFIG = {
   finaleMensajeTexto:
     "Lo demás no te lo va a decir una página web. Te lo quiero decir yo, " +
     "cuando tú quieras y sin ningún apuro. Escríbeme.\n\nMorning, pequeña Ari.",
+
+  heroTag: "serie original · para una sola espectadora",
+  heroMeta: "2026 · 7 episodios · estreno diario a las 00:00",
+  heroSynopsis: "Una serie sobre un grupo que no sabía que era una serie.",
 };
 
 /* Cada episodio se desbloquea a las 00:00 hora de Lima (UTC-5).
@@ -31,21 +35,20 @@ const CONFIG = {
 
 const EPISODES = [
   /* ------------------------------------------------------------
-     E1 · PILOTO — el origen (hace ~1 año)
-     Mecánica: partido de ping pong jugable. Cada peloteo que ella
-     gana revela un capítulo de la historia.
+     E1 · PILOTO — el origen. Partido de ping pong continuo:
+     cada devolución de ella escribe un capítulo, sin cortar el juego.
      ------------------------------------------------------------ */
   {
     num: 1,
     title: "Piloto",
     genre: "El origen",
+    duration: "≈ 3 min",
     unlockISO: "2026-07-16T05:00:00Z",
     accent: "#7fb4c9",
     synopsis: "Cuatro tipos, una mesa de ping pong y una interrupción no solicitada.",
     lockedHint: "Disponible el 16 de julio",
     type: "pong",
-    intro: "Para entender esta historia hay que ganarse cada punto. Juega.",
-    rallies: 5, // devoluciones necesarias
+    intro: "Esta historia se cuenta jugando. Devuelve la pelota.",
     vignettes: [
       "Había una vez cuatro tipos y una mesa de ping pong: Gianfranco, César, Ignacio y yo. Grupo cerrado. Solo ping pong.",
       "Un día, un grupo de chicas se acercó a jugar. Spoiler: no fue por el ping pong.",
@@ -53,21 +56,21 @@ const EPISODES = [
       "Poco a poco los dos grupos se volvieron uno. Nadie lo decidió: simplemente pasó.",
       "Y en ese grupo venía una niña que, sin que nadie lo planeara, se iba a volver mi mejor amiga.",
     ],
+    endText: "Fin del piloto.",
     quote: "A veces la vida te cambia de mesa sin avisar.",
     hiddenWord: "vida",
     teaser: "Próximo episodio: dos personajes, un parque, cero efectos especiales. El favorito de la crítica.",
   },
 
   /* ------------------------------------------------------------
-     E2 · EL EPISODIO TRANQUILO — el parque (la primera
-     conversación real, cronológicamente antes que todo lo demás)
-     Mecánica: scroll cinematográfico — la noche avanza, aparecen
-     estrellas y luciérnagas, y al fondo la máquina y los heyfit.
+     E2 · EL EPISODIO TRANQUILO — el parque, la primera
+     conversación real (cronológicamente antes que todo lo demás)
      ------------------------------------------------------------ */
   {
     num: 2,
     title: "El episodio tranquilo",
     genre: "Bottle episode",
+    duration: "≈ 3 min",
     unlockISO: "2026-07-17T05:00:00Z",
     accent: "#9a8fd1",
     synopsis: "Dos personajes, una locación. No pasa nada. Pasa todo.",
@@ -90,13 +93,12 @@ const EPISODES = [
 
   /* ------------------------------------------------------------
      E3 · EN EL QUE NOS DOLIÓ LA BARRIGA — Friday's
-     Mecánica: sitcom con guion que se escribe a máquina y un
-     medidor de risas que ella llena a toques rápidos.
      ------------------------------------------------------------ */
   {
     num: 3,
     title: "En el que nos dolió la barriga",
     genre: "Sitcom",
+    duration: "≈ 3 min",
     unlockISO: "2026-07-18T05:00:00Z",
     accent: "#e5c46b",
     synopsis: "Grabado frente a un público en vivo. El público somos nosotros.",
@@ -117,13 +119,12 @@ const EPISODES = [
 
   /* ------------------------------------------------------------
      E4 · LOS PASILLOS — el cine, Backrooms
-     Mecánica: pasillo oscuro con linterna táctil, contador de
-     hallazgos y textura VHS.
      ------------------------------------------------------------ */
   {
     num: 4,
     title: "Los pasillos",
     genre: "Terror",
+    duration: "≈ 3 min",
     unlockISO: "2026-07-19T05:00:00Z",
     accent: "#c9d64f",
     synopsis: "Este episodio se ve mejor con las luces apagadas.",
@@ -144,36 +145,42 @@ const EPISODES = [
 
   /* ------------------------------------------------------------
      E5 · SUPERVIVENCIA — fiesta de Gianfranco + The Last of Us
-     Mecánica: inventario estilo TLOU con cartas que giran y un
-     chat del directo que corre en vivo.
+     Minijuego: rondas de infectados que ella elimina tocándolos.
+     Cada ronda limpia asegura un suministro con su historia.
      ------------------------------------------------------------ */
   {
     num: 5,
     title: "Supervivencia",
     genre: "Postapocalíptico",
+    duration: "≈ 4 min",
     unlockISO: "2026-07-20T05:00:00Z",
     accent: "#6fbf8e",
     synopsis: "En un mundo hostil, el inventario lo es todo.",
     lockedHint: "Disponible el 20 de julio",
-    type: "inventory",
-    hint: "revisa el equipo · gira cada objeto",
-    items: [
+    type: "survival",
+    hint: "toca a los infectados antes de que lleguen al campamento",
+    enemy: "🧟",
+    waves: [
       {
+        count: 4,
         icon: "🎮",
         name: "Un control",
         text: "The Last of Us. La historia que seguimos juntos: yo jugando en el directo, tú en el chat. Ese save file es de los dos.",
       },
       {
+        count: 5,
         icon: "🍾",
         name: "Una botella",
         text: "La fiesta de Gianfranco. Yo: fuera de combate. Tú: cuidando mis cosas y asegurándote de que no me lastimara. Nunca lo dije bien: gracias.",
       },
       {
+        count: 6,
         icon: "🎒",
         name: "Suministros",
         text: "Dato de supervivencia comprobado: aguantar cualquier apocalipsis es más fácil cuando alguien te cuida la espalda.",
       },
       {
+        count: 7,
         icon: "📻",
         name: "Una señal de radio",
         text: "El chat diario. Contarse todo. Todos los días. Esa señal nunca se ha caído.",
@@ -196,29 +203,37 @@ const EPISODES = [
   },
 
   /* ------------------------------------------------------------
-     E6 · SIX — el presente: morning, jam, rutina
-     Mecánica: instrumento táctil real — pasar el dedo por las
-     cuerdas de luz produce notas (suena de verdad).
+     E6 · SIX — el presente: morning, jam, rutina.
+     LA MELODÍA INCOMPLETA: seis cuerdas afinadas para tocar una
+     melodía que queda en el aire — le falta su última nota.
+     La séptima cuerda está bloqueada: llega mañana, con el E7.
+     (Y en el E7, cuando la frase se revela, la melodía por fin
+     se completa y resuelve. El sonido ES la historia.)
      ------------------------------------------------------------ */
   {
     num: 6,
     title: "Six",
     genre: "Slice of life",
+    duration: "≈ 3 min",
     unlockISO: "2026-07-21T05:00:00Z",
     accent: "#d98fb0",
-    synopsis: "Primera parte del final de temporada. La rutina también cuenta historias.",
+    synopsis: "Primera parte del final de temporada. La rutina también suena.",
     lockedHint: "Disponible el 21 de julio",
     type: "jam",
-    hint: "pasa el dedo por las cuerdas · suena de verdad, sube el volumen",
-    lines: [
-      "Todos los días empiezan igual: “morning”.",
-      "Y muchos terminan igual: estudiando con una jam de fondo.",
-      "Arctic Monkeys, Sabrina, lo que caiga. En inglés, dizque para no distraernos.",
-      "Nadie escribió esta rutina. Se escribió sola. Esas son las mejores.",
+    hint: "rasguea de izquierda a derecha · con sonido 🔊",
+    introLines: [
+      "Todos los días empiezan igual: “morning”. Y muchos terminan igual: una jam para estudiar. Arctic Monkeys, Sabrina, lo que caiga.",
+      "Nuestra rutina tiene banda sonora. La afiné aquí, en seis cuerdas. Tócala.",
     ],
+    afterStrum:
+      "¿La escuchaste? La melodía sube… y se queda en el aire. No termina.",
+    afterStrum2:
+      "No está rota. Está incompleta: le falta su última nota. Y la última nota no vive en este episodio.",
+    seventhLabel: "La nota que falta se estrena mañana, a las 00:00.",
+    lockedStringHint: "mañana",
     quote: "Toda buena canción sabe dónde va la pausa, justo antes de la parte importante.",
     hiddenWord: ",",
-    teaser: "Final de temporada: mañana a las 00:00. No llegues tarde.",
+    teaser: "Final de temporada: mañana a las 00:00. Trae la última nota.",
   },
 
   /* ------------------------------------------------------------
@@ -228,6 +243,7 @@ const EPISODES = [
     num: 7,
     title: "Seven",
     genre: "Final de temporada",
+    duration: "el que necesites",
     unlockISO: "2026-07-22T05:00:00Z",
     accent: "#e8a15c",
     synopsis: "Todo estaba conectado.",
@@ -240,6 +256,7 @@ const EPISODES = [
       "Mira.",
     ],
     phraseDisplay: "Quiero seguir mi vida, contigo.",
+    noteLine: "¿Recuerdas la nota que faltaba? Es esta.",
     finalMessage:
       "Ari.\n\n" +
       "Esto nunca fue una serie. Es solo nuestro último año, contado como me gusta recordarlo.\n\n" +
