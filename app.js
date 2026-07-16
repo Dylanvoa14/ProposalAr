@@ -1,5 +1,5 @@
 /* ============================================================
-   LA MESA — motor de la experiencia (v2)
+   LA MESA — motor de la experiencia (v3)
    (No hace falta editar este archivo; los textos están en content.js)
    ============================================================ */
 (() => {
@@ -41,9 +41,32 @@
 
   /* ---------- Utilidades ---------- */
   const $ = (sel, root = document) => root.querySelector(sel);
-  const esc = (s) => s.replace(/[&<>"']/g, (c) =>
+  const esc = (s) => String(s).replace(/[&<>"']/g, (c) =>
     ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const vibrate = (p) => { try { navigator.vibrate && navigator.vibrate(p); } catch (e) {} };
+  const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+
+  /* ---------- Audio compartido (la melodía de la serie) ---------- */
+  let audioCtx = null;
+  function playNote(freq, delayMs = 0, dur = 0.9, vol = 0.2) {
+    try {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (audioCtx.state === "suspended") audioCtx.resume();
+      const t = audioCtx.currentTime + delayMs / 1000;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type = "triangle";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, t);
+      gain.gain.exponentialRampToValueAtTime(vol, t + 0.015);
+      gain.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+      osc.connect(gain).connect(audioCtx.destination);
+      osc.start(t); osc.stop(t + dur + 0.1);
+    } catch (e) { /* sin audio: el gesto visual basta */ }
+  }
+  // La melodía de la serie: C D E G A B … y la nota que falta: C5 (llega en el E7)
+  const MELODY = [261.63, 293.66, 329.63, 392.0, 440.0, 493.88];
+  const MISSING_NOTE = 523.25;
 
   function quoteHTML(ep) {
     const q = esc(ep.quote);
@@ -67,11 +90,123 @@
     return (d > 0 ? d + "d " : "") + h + ":" + m + ":" + ss;
   }
 
+  /* ---------- Miniaturas (artwork por episodio) ---------- */
+  function artwork(num) {
+    const A = {
+      1: `<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
+        <rect width="160" height="90" fill="#0d1114"/>
+        <rect x="30" y="16" width="100" height="58" rx="6" fill="#14352a" stroke="#e8e6e126" stroke-width="1.5"/>
+        <line x1="30" y1="45" x2="130" y2="45" stroke="#e8e6e13a" stroke-width="1.5" stroke-dasharray="4 4"/>
+        <rect x="62" y="20" width="36" height="5" rx="2.5" fill="#c9563e"/>
+        <rect x="60" y="66" width="40" height="5" rx="2.5" fill="#7fb4c9"/>
+        <circle cx="96" cy="34" r="4.5" fill="#ffe9c9"/>
+        <circle cx="96" cy="34" r="9" fill="#ffe9c9" opacity=".15"/>
+      </svg>`,
+      2: `<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
+        <defs><linearGradient id="sky2" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#182036"/><stop offset="100%" stop-color="#0b0f1c"/>
+        </linearGradient></defs>
+        <rect width="160" height="90" fill="url(#sky2)"/>
+        <circle cx="118" cy="24" r="11" fill="#f0e9d4"/>
+        <circle cx="122" cy="21" r="10" fill="#182036"/>
+        <circle cx="40" cy="18" r="1.4" fill="#fff" opacity=".8"/>
+        <circle cx="66" cy="30" r="1.1" fill="#fff" opacity=".6"/>
+        <circle cx="90" cy="14" r="1.2" fill="#fff" opacity=".7"/>
+        <circle cx="26" cy="40" r="1" fill="#fff" opacity=".5"/>
+        <line x1="10" y1="74" x2="150" y2="74" stroke="#3d3a55" stroke-width="2"/>
+        <rect x="58" y="58" width="34" height="4" rx="2" fill="#9a8fd1"/>
+        <line x1="62" y1="62" x2="62" y2="74" stroke="#9a8fd1" stroke-width="3" stroke-linecap="round"/>
+        <line x1="86" y1="62" x2="86" y2="74" stroke="#9a8fd1" stroke-width="3" stroke-linecap="round"/>
+        <rect x="106" y="58" width="6" height="16" rx="2.5" fill="none" stroke="#d8e37a" stroke-width="1.6"/>
+        <rect x="116" y="58" width="6" height="16" rx="2.5" fill="none" stroke="#d8e37a" stroke-width="1.6"/>
+      </svg>`,
+      3: `<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
+        <rect width="160" height="90" fill="#120f08"/>
+        <rect x="34" y="26" width="92" height="38" rx="8" fill="none" stroke="#e5c46b" stroke-width="2.5"/>
+        <rect x="34" y="26" width="92" height="38" rx="8" fill="#e5c46b12"/>
+        <text x="80" y="52" text-anchor="middle" font-family="Impact, sans-serif" font-size="17" letter-spacing="4" fill="#ffe9ad">RISAS</text>
+        <circle cx="34" cy="26" r="2" fill="#ffe9ad"/><circle cx="126" cy="26" r="2" fill="#ffe9ad"/>
+        <circle cx="34" cy="64" r="2" fill="#ffe9ad"/><circle cx="126" cy="64" r="2" fill="#ffe9ad"/>
+      </svg>`,
+      4: `<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
+        <rect width="160" height="90" fill="#060706"/>
+        <polygon points="0,0 160,0 122,26 38,26" fill="#8a8f3c" opacity=".25"/>
+        <polygon points="0,90 160,90 122,64 38,64" fill="#6b7030" opacity=".3"/>
+        <polygon points="0,0 38,26 38,64 0,90" fill="#7a7f36" opacity=".2"/>
+        <polygon points="160,0 122,26 122,64 160,90" fill="#7a7f36" opacity=".2"/>
+        <rect x="38" y="26" width="84" height="38" fill="#0d0f07"/>
+        <rect x="72" y="38" width="16" height="26" fill="#c9d64f" opacity=".85"/>
+        <rect x="72" y="38" width="16" height="26" fill="none" stroke="#0d0f07" stroke-width="1"/>
+      </svg>`,
+      5: `<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
+        <defs><radialGradient id="fog5" cx="50%" cy="60%" r="70%">
+          <stop offset="0%" stop-color="#1a2b1f"/><stop offset="100%" stop-color="#0a120d"/>
+        </radialGradient></defs>
+        <rect width="160" height="90" fill="url(#fog5)"/>
+        <text x="80" y="58" text-anchor="middle" font-size="30" opacity=".9">🧟</text>
+        <text x="36" y="70" text-anchor="middle" font-size="18" opacity=".55">🧟</text>
+        <text x="124" y="44" text-anchor="middle" font-size="15" opacity=".4">🧟</text>
+        <circle cx="80" cy="80" r="5" fill="#ff9a3c" opacity=".9"/>
+        <circle cx="80" cy="80" r="10" fill="#ff9a3c" opacity=".2"/>
+      </svg>`,
+      6: `<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
+        <rect width="160" height="90" fill="#160f13"/>
+        <line x1="46" y1="12" x2="46" y2="78" stroke="#d98fb0" stroke-width="2.5"/>
+        <line x1="62" y1="12" x2="62" y2="78" stroke="#d98fb0" stroke-width="2.5" opacity=".85"/>
+        <line x1="78" y1="12" x2="78" y2="78" stroke="#d98fb0" stroke-width="2.5" opacity=".7"/>
+        <line x1="94" y1="12" x2="94" y2="78" stroke="#d98fb0" stroke-width="2.5" opacity=".55"/>
+        <line x1="110" y1="12" x2="110" y2="78" stroke="#d98fb0" stroke-width="2.5" opacity=".4"/>
+        <line x1="126" y1="12" x2="126" y2="78" stroke="#d98fb0" stroke-width="2.5" opacity=".3"/>
+        <line x1="142" y1="12" x2="142" y2="78" stroke="#4a3a42" stroke-width="2.5" stroke-dasharray="4 5"/>
+        <circle cx="22" cy="24" r="12" fill="none" stroke="#d98fb0" stroke-width="2"/>
+        <circle cx="22" cy="24" r="4" fill="#d98fb0"/>
+      </svg>`,
+      7: `<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg">
+        <defs><radialGradient id="gold7" cx="50%" cy="50%" r="70%">
+          <stop offset="0%" stop-color="#3a2a16"/><stop offset="100%" stop-color="#120d06"/>
+        </radialGradient></defs>
+        <rect width="160" height="90" fill="url(#gold7)"/>
+        <polygon points="80,10 84,38 80,45 76,38" fill="#e8a15c" opacity=".5"/>
+        <polygon points="80,80 84,52 80,45 76,52" fill="#e8a15c" opacity=".5"/>
+        <polygon points="35,45 73,41 80,45 73,49" fill="#e8a15c" opacity=".5"/>
+        <polygon points="125,45 87,41 80,45 87,49" fill="#e8a15c" opacity=".5"/>
+        <circle cx="80" cy="45" r="7" fill="#ffe9c9"/>
+        <circle cx="80" cy="45" r="16" fill="#ffe9c9" opacity=".14"/>
+      </svg>`,
+    };
+    return A[num] || "";
+  }
+
   /* ---------- Portada ---------- */
   const list = $("#episodeList");
   let countdownTimer = null;
 
+  function nextToWatch() {
+    const seen = store.seen;
+    const unlocked = EPISODES.filter(isUnlocked);
+    if (!unlocked.length) return null;
+    return unlocked.find((e) => !seen.includes(e.num)) || unlocked[unlocked.length - 1];
+  }
+
   function renderHome() {
+    // billboard
+    $("#bbTag").textContent = CONFIG.heroTag;
+    $("#bbMeta").textContent = CONFIG.heroMeta;
+    $("#bbSyn").textContent = CONFIG.heroSynopsis;
+    const play = $("#bbPlay");
+    const nxt = nextToWatch();
+    if (nxt) {
+      play.disabled = false;
+      play.innerHTML = store.seen.includes(nxt.num)
+        ? "↺&nbsp;&nbsp;Volver a ver E" + nxt.num
+        : "▶&nbsp;&nbsp;Reproducir E" + nxt.num;
+      play.onclick = () => openEpisode(nxt);
+    } else {
+      play.disabled = true;
+      play.textContent = "El estreno se acerca…";
+      play.onclick = null;
+    }
+
     list.innerHTML = "";
     clearInterval(countdownTimer);
     const seen = store.seen;
@@ -86,11 +221,19 @@
       card.className = "ep-card " + (unlocked ? "unlocked" : "locked") + (wasSeen ? " seen" : "");
       card.style.setProperty("--ep-accent", ep.accent);
       card.innerHTML = `
-        <div class="ep-thumb"><span class="ep-num">${ep.num}</span></div>
+        <div class="ep-thumb">
+          ${artwork(ep.num)}
+          ${unlocked ? '<div class="play-ico"><span>▶</span></div>' : '<div class="ep-lock">🔒</div>'}
+          ${wasSeen ? '<div class="ep-progress"><i style="width:100%"></i></div>' : ""}
+        </div>
         <div class="ep-info">
           <span class="ep-kicker">Episodio ${ep.num} · ${esc(ep.genre)}</span>
-          <span class="ep-title">${unlocked ? esc(ep.title) : "· · ·"}</span>
-          <span class="ep-syn">${esc(ep.synopsis)}</span>
+          <div class="ep-toprow">
+            <span class="ep-title">${unlocked ? esc(ep.title) : "· · ·"}</span>
+            ${unlocked && !wasSeen ? '<span class="badge-new">nuevo</span>' : ""}
+            <span class="ep-dur">${esc(ep.duration || "")}</span>
+          </div>
+          <div class="ep-syn">${esc(ep.synopsis)}</div>
           <span class="ep-state">
             <span class="dot"></span>
             <span class="st">${
@@ -117,7 +260,7 @@
 
     const unlockedCount = EPISODES.filter(isUnlocked).length;
     $("#progressBadge").textContent =
-      unlockedCount >= 7 ? "temporada completa" : `${unlockedCount}/7 estrenados`;
+      unlockedCount >= 7 ? "temporada completa" : `${unlockedCount} de 7 estrenados`;
 
     renderShelf();
   }
@@ -141,7 +284,7 @@
 
   const RENDERERS = {
     pong: epPong, park: epPark, sitcom: epSitcom, hall: epHall,
-    inventory: epInventory, jam: epJam, finale: epFinale,
+    survival: epSurvival, jam: epJam, finale: epFinale,
   };
 
   function openEpisode(ep) {
@@ -192,178 +335,196 @@
   }
 
   /* ============================================================
-     E1 · PILOTO — ping pong jugable
-     Vista cenital: su paleta abajo (sigue el dedo), rival arriba.
-     Cada devolución que logra revela un capítulo de la historia.
+     E1 · PILOTO — partido de ping pong CONTINUO.
+     La pelota nunca reaparece del centro: siempre hay un saque
+     del rival o un peloteo vivo. Cada devolución de ella escribe
+     el siguiente capítulo arriba, sin cortar el juego.
      ============================================================ */
   function epPong(ep) {
+    const TOTAL = ep.vignettes.length;
     content.innerHTML = `
       <div class="ep-screen">
         ${epHeader(ep)}
-        <p class="hint" style="margin:0 0 14px">${esc(ep.intro)}</p>
-        <div class="pong-wrap">
+        <div class="pong-vignette fade-in" id="vg">${esc(ep.intro)}</div>
+        <div class="pong-wrap" style="--ep-accent:${ep.accent}">
           <canvas class="pong-canvas" id="pongC"></canvas>
           <div class="pong-story" id="story">
             <div>
-              <div class="ps-text">Desliza el dedo para mover tu paleta.\nDevuelve la pelota para avanzar la historia.</div>
-              <div class="ps-tap">toca para empezar</div>
+              <div class="ps-text">Desliza el dedo sobre la mesa para mover tu paleta.\nCada devolución tuya cuenta un capítulo.</div>
+              <div class="ps-tap">toca para sacar</div>
             </div>
           </div>
           <div class="pong-score">
-            <span id="rallyLbl">capítulos: 0 / ${ep.vignettes.length}</span>
+            <span id="rallyLbl">capítulos · 0 / ${TOTAL}</span>
             <span>LA MESA · E1</span>
           </div>
         </div>
       </div>`;
 
-    const canvas = $("#pongC"), story = $("#story");
-    const W = 400, H = 560;
+    const canvas = $("#pongC"), story = $("#story"), vg = $("#vg");
+    const W = 400, H = 520;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
     canvas.width = W * dpr; canvas.height = H * dpr;
     canvas.style.aspectRatio = W + "/" + H;
     const ctx = canvas.getContext("2d");
     ctx.scale(dpr, dpr);
 
-    const state = {
-      running: false, chapter: 0,
-      me: { x: W / 2, y: H - 46, w: 92, h: 12 },
-      ai: { x: W / 2, y: 34, w: 92, h: 12 },
-      ball: { x: W / 2, y: H / 2, r: 9, vx: 0, vy: 0 },
-      trail: [], msg: "",
-      raf: null, done: false,
+    const st = {
+      running: false, done: false, ending: false, raf: null,
+      returns: 0, msg: "", msgUntil: 0,
+      me: { x: W / 2, y: H - 42, w: 106, h: 13 },
+      ai: { x: W / 2, y: 28, w: 96, h: 13 },
+      ball: { x: W / 2, y: 60, r: 9, vx: 0, vy: 0 },
+      trail: [],
+      serveTimer: null,
     };
+    const speed = () => 3.9 + st.returns * 0.32;
 
-    function serve(toPlayer = true) {
-      state.ball.x = W / 2;
-      state.ball.y = H / 2;
-      const speed = 4.1 + state.chapter * 0.5;
-      const ang = (Math.random() * 0.8 - 0.4);
-      state.ball.vx = Math.sin(ang) * speed;
-      state.ball.vy = (toPlayer ? 1 : -1) * Math.cos(ang) * speed;
-      state.trail = [];
+    function serveFromAI(delay = 0) {
+      clearTimeout(st.serveTimer);
+      st.serveTimer = setTimeout(() => {
+        st.ball.x = st.ai.x;
+        st.ball.y = st.ai.y + st.ai.h + st.ball.r + 2;
+        const ang = (Math.random() * 0.7 - 0.35);
+        st.ball.vx = Math.sin(ang) * speed();
+        st.ball.vy = Math.cos(ang) * speed();
+        st.trail = [];
+      }, delay);
     }
 
-    function movePaddle(clientX) {
+    function flash(text, ms = 1100) { st.msg = text; st.msgUntil = performance.now() + ms; }
+
+    function setX(clientX) {
       const r = canvas.getBoundingClientRect();
-      const x = ((clientX - r.left) / r.width) * W;
-      state.me.x = Math.max(state.me.w / 2, Math.min(W - state.me.w / 2, x));
+      st.me.x = clamp(((clientX - r.left) / r.width) * W, st.me.w / 2, W - st.me.w / 2);
     }
-    const onPtr = (e) => { movePaddle(e.touches ? e.touches[0].clientX : e.clientX); };
-    canvas.addEventListener("pointermove", onPtr);
-    canvas.addEventListener("pointerdown", onPtr);
-    canvas.addEventListener("touchmove", onPtr, { passive: true });
+    canvas.addEventListener("pointerdown", (e) => {
+      try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+      setX(e.clientX);
+    });
+    canvas.addEventListener("pointermove", (e) => setX(e.clientX));
+    canvas.addEventListener("touchstart", (e) => { setX(e.touches[0].clientX); }, { passive: true });
+    canvas.addEventListener("touchmove", (e) => { e.preventDefault(); setX(e.touches[0].clientX); }, { passive: false });
 
-    function pauseWithChapter() {
-      state.running = false;
-      const last = state.chapter >= ep.vignettes.length;
-      story.innerHTML = last
-        ? `<div><div class="ps-text">${esc("Fin del capítulo piloto.")}</div>
-             <div class="ps-tap">toca para ver la tarjeta del episodio</div></div>`
-        : `<div><div class="ps-text">${esc(ep.vignettes[state.chapter])}</div>
-             <div class="ps-tap">toca para seguir jugando</div></div>`;
+    function herReturn() {
+      st.returns++;
+      $("#rallyLbl").textContent = `capítulos · ${Math.min(st.returns, TOTAL)} / ${TOTAL}`;
+      if (st.returns <= TOTAL) {
+        vg.textContent = ep.vignettes[st.returns - 1];
+        vg.classList.remove("fade-in"); void vg.offsetWidth; vg.classList.add("fade-in");
+      }
+      if (st.returns >= TOTAL) st.ending = true;
+      vibrate(14);
+    }
+
+    function finishMatch() {
+      st.running = false;
+      story.innerHTML = `
+        <div>
+          <div class="ps-text">${esc(ep.endText)}</div>
+          <div class="ps-tap">toca para ver la tarjeta del episodio</div>
+        </div>`;
       story.classList.remove("hidden");
-      const shown = last ? ep.vignettes.length : state.chapter + 1;
-      $("#rallyLbl").textContent = `capítulos: ${shown} / ${ep.vignettes.length}`;
-      story.onclick = () => {
-        if (last) { showQuoteCard(ep); return; }
-        state.chapter++;
-        story.classList.add("hidden");
-        serve(true);
-        state.running = true;
-      };
+      story.onclick = () => showQuoteCard(ep);
+      vibrate([20, 50, 20]);
     }
 
     function step() {
-      if (state.done) return;
-      const b = state.ball, me = state.me, ai = state.ai;
-      if (state.running) {
+      if (st.done) return;
+      const b = st.ball, me = st.me, ai = st.ai;
+
+      if (st.running) {
         b.x += b.vx; b.y += b.vy;
-        state.trail.push({ x: b.x, y: b.y });
-        if (state.trail.length > 12) state.trail.shift();
+        st.trail.push({ x: b.x, y: b.y });
+        if (st.trail.length > 14) st.trail.shift();
 
-        // paredes
-        if (b.x < b.r) { b.x = b.r; b.vx *= -1; }
-        if (b.x > W - b.r) { b.x = W - b.r; b.vx *= -1; }
+        if (b.x < b.r + 16) { b.x = b.r + 16; b.vx = Math.abs(b.vx); }
+        if (b.x > W - b.r - 16) { b.x = W - b.r - 16; b.vx = -Math.abs(b.vx); }
 
-        // rival (siempre devuelve, con estilo)
-        ai.x += (b.x - ai.x) * 0.12;
-        if (b.vy < 0 && b.y - b.r < ai.y + ai.h && b.y > ai.y) {
-          if (Math.abs(b.x - ai.x) < ai.w / 2 + b.r) {
-            b.vy = Math.abs(b.vy);
-            b.vx += (b.x - ai.x) * 0.04;
-            vibrate(8);
+        // rival: sigue la pelota cuando viene hacia él, si no vuelve al centro
+        if (b.vy < 0) ai.x += clamp((b.x - ai.x) * 0.18, -6.5, 6.5);
+        else ai.x += clamp((W / 2 - ai.x) * 0.03, -2, 2);
+        ai.x = clamp(ai.x, ai.w / 2 + 14, W - ai.w / 2 - 14);
+
+        // golpe del rival
+        if (b.vy < 0 && b.y - b.r <= ai.y + ai.h && b.y > ai.y - 8 &&
+            Math.abs(b.x - ai.x) < ai.w / 2 + b.r + 4) {
+          if (st.ending) { finishMatch(); }
+          else {
+            b.y = ai.y + ai.h + b.r;
+            b.vy = speed();
+            b.vx = clamp(b.vx + (b.x - ai.x) * 0.045, -4.6, 4.6);
+            vibrate(6);
           }
         }
-        // su paleta
-        if (b.vy > 0 && b.y + b.r > me.y && b.y < me.y + me.h + 14) {
-          if (Math.abs(b.x - me.x) < me.w / 2 + b.r) {
-            b.vy = -Math.abs(b.vy) * 1.03;
-            b.vx += (b.x - me.x) * 0.05;
-            vibrate(12);
-            pauseWithChapter();
-          }
+        // golpe de ella
+        if (b.vy > 0 && b.y + b.r >= me.y && b.y < me.y + me.h + 16 &&
+            Math.abs(b.x - me.x) < me.w / 2 + b.r + 5) {
+          b.y = me.y - b.r;
+          b.vy = -(speed() + 0.5);
+          b.vx = clamp(b.vx + (b.x - me.x) * 0.055, -5, 5);
+          herReturn();
         }
-        // se le pasó: nueva pelota, sin castigo
-        if (b.y > H + 30) { state.msg = "casi — va de nuevo"; serve(true); }
-        if (b.y < -30) { serve(false); }
+        // se le pasó → saque nuevo del rival (nunca del centro)
+        if (b.y > H + 26) {
+          flash("casi — saque del rival");
+          b.vx = 0; b.vy = 0; b.y = -100;
+          serveFromAI(650);
+        }
       }
 
-      // ---- dibujo ----
+      /* ---- dibujo ---- */
       ctx.clearRect(0, 0, W, H);
       // mesa
-      ctx.fillStyle = "#14352a";
-      roundRect(ctx, 14, 14, W - 28, H - 28, 14); ctx.fill();
-      ctx.strokeStyle = "#e8e6e133"; ctx.lineWidth = 2;
-      roundRect(ctx, 14, 14, W - 28, H - 28, 14); ctx.stroke();
+      rr(ctx, 14, 14, W - 28, H - 28, 14);
+      ctx.fillStyle = "#14352a"; ctx.fill();
+      ctx.strokeStyle = "#e8e6e130"; ctx.lineWidth = 2; ctx.stroke();
       // red
-      ctx.setLineDash([7, 7]);
-      ctx.strokeStyle = "#e8e6e155";
+      ctx.setLineDash([7, 7]); ctx.strokeStyle = "#e8e6e150";
       ctx.beginPath(); ctx.moveTo(14, H / 2); ctx.lineTo(W - 14, H / 2); ctx.stroke();
       ctx.setLineDash([]);
-      // línea central
-      ctx.strokeStyle = "#e8e6e112";
+      ctx.strokeStyle = "#e8e6e110";
       ctx.beginPath(); ctx.moveTo(W / 2, 14); ctx.lineTo(W / 2, H - 14); ctx.stroke();
       // estela
-      state.trail.forEach((t, i) => {
-        ctx.globalAlpha = (i / state.trail.length) * 0.35;
+      st.trail.forEach((t, i) => {
+        ctx.globalAlpha = (i / st.trail.length) * 0.3;
         ctx.fillStyle = "#ffe9c9";
-        ctx.beginPath(); ctx.arc(t.x, t.y, 6, 0, 7); ctx.fill();
+        ctx.beginPath(); ctx.arc(t.x, t.y, 5.5, 0, 7); ctx.fill();
       });
       ctx.globalAlpha = 1;
       // paletas
-      ctx.fillStyle = "#c9563e";
-      roundRect(ctx, ai.x - ai.w / 2, ai.y, ai.w, ai.h, 6); ctx.fill();
-      ctx.fillStyle = "#7fb4c9";
-      roundRect(ctx, me.x - me.w / 2, me.y, me.w, me.h, 6); ctx.fill();
-      ctx.shadowColor = "#7fb4c9"; ctx.shadowBlur = 14;
-      roundRect(ctx, me.x - me.w / 2, me.y, me.w, me.h, 6); ctx.fill();
+      rr(ctx, ai.x - ai.w / 2, ai.y, ai.w, ai.h, 6); ctx.fillStyle = "#c9563e"; ctx.fill();
+      ctx.shadowColor = "#7fb4c9"; ctx.shadowBlur = 16;
+      rr(ctx, me.x - me.w / 2, me.y, me.w, me.h, 6); ctx.fillStyle = "#7fb4c9"; ctx.fill();
       ctx.shadowBlur = 0;
       // pelota
-      ctx.fillStyle = "#fff4dd";
-      ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 7); ctx.fill();
-      // mensaje
-      if (state.msg && state.running) {
-        ctx.fillStyle = "#e8e6e177"; ctx.font = "12px Inter, sans-serif"; ctx.textAlign = "center";
-        ctx.fillText(state.msg, W / 2, H / 2 - 16);
+      if (st.ball.y > -50) {
+        ctx.fillStyle = "#fff4dd";
+        ctx.beginPath(); ctx.arc(b.x, b.y, b.r, 0, 7); ctx.fill();
+      }
+      // mensaje flotante
+      if (st.msg && performance.now() < st.msgUntil) {
+        ctx.fillStyle = "#e8e6e199"; ctx.font = "600 13px Inter, sans-serif"; ctx.textAlign = "center";
+        ctx.fillText(st.msg, W / 2, H / 2 - 14);
       }
 
-      state.raf = requestAnimationFrame(step);
+      st.raf = requestAnimationFrame(step);
     }
-    function roundRect(c, x, y, w, h, r) {
+    function rr(c, x, y, w, h, r) {
       c.beginPath();
       c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r);
       c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r);
       c.arcTo(x, y, x + w, y, r); c.closePath();
     }
 
-    // pantalla inicial: toca para empezar
     story.onclick = () => {
       story.classList.add("hidden");
-      serve(true); state.running = true; state.msg = "";
+      st.running = true;
+      serveFromAI(150);
     };
 
-    state.raf = requestAnimationFrame(step);
-    cleanupFns.push(() => { state.done = true; cancelAnimationFrame(state.raf); });
+    st.raf = requestAnimationFrame(step);
+    cleanupFns.push(() => { st.done = true; cancelAnimationFrame(st.raf); clearTimeout(st.serveTimer); });
   }
 
   /* ============================================================
@@ -380,20 +541,16 @@
           ${ep.fragments.map((f) => `<div class="park-frag">${esc(f)}</div>`).join("")}
           <div class="park-scene fade-in">
             <svg viewBox="0 0 320 150" fill="none" xmlns="http://www.w3.org/2000/svg" aria-label="La máquina del parque y dos heyfit">
-              <!-- suelo -->
-              <line x1="10" y1="132" x2="310" y2="132" stroke="#5c636c" stroke-width="2" stroke-linecap="round"/>
-              <!-- máquina de piernas -->
+              <line x1="10" y1="132" x2="310" y2="132" stroke="#63635e" stroke-width="2" stroke-linecap="round"/>
               <line x1="80" y1="132" x2="80" y2="52" stroke="#9a8fd1" stroke-width="4" stroke-linecap="round"/>
               <line x1="80" y1="60" x2="130" y2="78" stroke="#9a8fd1" stroke-width="4" stroke-linecap="round"/>
               <rect x="122" y="72" width="26" height="9" rx="4" fill="#9a8fd1"/>
               <line x1="80" y1="90" x2="46" y2="112" stroke="#9a8fd1" stroke-width="4" stroke-linecap="round"/>
               <rect x="30" y="106" width="24" height="9" rx="4" fill="#9a8fd1"/>
               <circle cx="80" cy="52" r="5" fill="#9a8fd1"/>
-              <!-- asiento doble -->
               <rect x="168" y="96" width="70" height="8" rx="4" fill="#7d739e"/>
               <line x1="176" y1="104" x2="176" y2="132" stroke="#7d739e" stroke-width="4" stroke-linecap="round"/>
               <line x1="230" y1="104" x2="230" y2="132" stroke="#7d739e" stroke-width="4" stroke-linecap="round"/>
-              <!-- dos heyfit -->
               <rect x="256" y="96" width="13" height="34" rx="5" fill="none" stroke="#d8e37a" stroke-width="2.5"/>
               <rect x="259" y="88" width="7" height="9" rx="2.5" fill="none" stroke="#d8e37a" stroke-width="2.5"/>
               <rect x="280" y="96" width="13" height="34" rx="5" fill="none" stroke="#d8e37a" stroke-width="2.5"/>
@@ -406,7 +563,6 @@
         </div>
       </div>`;
 
-    // estrellas y luciérnagas
     const stars = [], flies = [];
     for (let k = 0; k < 90; k++) {
       const s = document.createElement("div");
@@ -477,7 +633,7 @@
         typed.textContent = text.slice(0, ++i);
         if (i >= text.length) {
           clearInterval(typing);
-          scriptEl.querySelector(".caret").remove();
+          const c = scriptEl.querySelector(".caret"); if (c) c.remove();
           neon.classList.add("on");
           tap.disabled = false;
           filling = true;
@@ -495,7 +651,6 @@
       meter = Math.min(100, meter + 13);
       fill.style.width = meter + "%";
       vibrate(10);
-      // JAs
       for (let k = 0; k < 3; k++) {
         const ja = document.createElement("div");
         ja.className = "ja";
@@ -592,52 +747,128 @@
   }
 
   /* ============================================================
-     E5 · SUPERVIVENCIA — inventario con cartas + chat en vivo
+     E5 · SUPERVIVENCIA — LA HORDA. Rondas de infectados que
+     avanzan hacia el campamento; ella los elimina tocándolos.
+     Cada ronda limpia asegura un suministro con su historia.
      ============================================================ */
-  function epInventory(ep) {
+  function epSurvival(ep) {
     content.innerHTML = `
       <div class="ep-screen">
         ${epHeader(ep)}
-        <div class="inv-hud">
-          <span>equipo</span>
-          <div class="bar"><i id="invBar"></i></div>
-          <span id="invPct">0%</span>
+        <div class="surv-hud">
+          <span id="waveLbl">ronda 1 / ${ep.waves.length}</span>
+          <span>·</span>
+          <span id="leftLbl">quedan ${ep.waves[0].count}</span>
         </div>
-        <p class="hint" style="margin:2px 0 0">${esc(ep.hint)}</p>
-        <div class="inv-grid" id="grid"></div>
-        <div class="inv-detail fade-in" id="detail">&nbsp;</div>
+        <p class="hint" style="margin:0 0 12px">${esc(ep.hint)}</p>
+        <div class="arena" id="arena">
+          <div class="camp">🔥</div>
+        </div>
         <div class="stream">
           <div class="stream-head"><span class="live"></span> directo · the last of us</div>
           <div class="stream-chat" id="chat"></div>
         </div>
-        <div id="invDoneWrap" class="hidden" style="margin-top:22px">
-          <button class="btn" id="invDone">continuar</button>
-        </div>
       </div>`;
 
-    const grid = $("#grid"), detail = $("#detail");
-    const inspected = new Set();
-    ep.items.forEach((it, idx) => {
-      const card = document.createElement("button");
-      card.className = "inv-card";
-      card.innerHTML = `
-        <div class="inv-inner">
-          <div class="inv-face front"><span class="ico">${it.icon}</span><span>${esc(it.name)}</span></div>
-          <div class="inv-face back"><span>${esc(it.name)}</span></div>
+    const arena = $("#arena"), waveLbl = $("#waveLbl"), leftLbl = $("#leftLbl");
+    let wave = 0, zombies = [], mover = null, spawner = null, alive = 0, spawned = 0;
+
+    function arenaSize() { const r = arena.getBoundingClientRect(); return { w: r.width || 440, h: r.height || 330 }; }
+
+    function spawnZombie(speedBase) {
+      const { w, h } = arenaSize();
+      const side = Math.floor(Math.random() * 4);
+      let x, y;
+      if (side === 0) { x = Math.random() * w; y = -20; }
+      else if (side === 1) { x = w + 20; y = Math.random() * h; }
+      else if (side === 2) { x = Math.random() * w; y = h + 20; }
+      else { x = -20; y = Math.random() * h; }
+      const el = document.createElement("button");
+      el.className = "zombie";
+      el.textContent = ep.enemy;
+      el.setAttribute("aria-label", "infectado");
+      arena.appendChild(el);
+      const z = { el, x, y, speed: speedBase * (0.85 + Math.random() * 0.4), dead: false, wob: Math.random() * 6.28 };
+      el.style.left = x + "px"; el.style.top = y + "px";
+      const kill = (ev) => {
+        ev.preventDefault();
+        if (z.dead) return;
+        z.dead = true; alive--;
+        el.classList.add("dead");
+        vibrate(18);
+        const fx = document.createElement("div");
+        fx.className = "hit-fx";
+        fx.textContent = ["+1", "LIMPIO", "BIEN"][Math.floor(Math.random() * 3)];
+        fx.style.left = z.x + "px"; fx.style.top = z.y + "px";
+        arena.appendChild(fx);
+        setTimeout(() => { el.remove(); fx.remove(); }, 650);
+        leftLbl.textContent = "quedan " + (alive + (waveTotal - spawned));
+        checkWave();
+      };
+      el.addEventListener("pointerdown", kill);
+      el.addEventListener("touchstart", kill, { passive: false });
+      zombies.push(z);
+      alive++;
+    }
+
+    let waveTotal = 0;
+    function startWave() {
+      const cfg = ep.waves[wave];
+      waveTotal = cfg.count; spawned = 0; alive = 0; zombies = [];
+      waveLbl.textContent = `ronda ${wave + 1} / ${ep.waves.length}`;
+      leftLbl.textContent = "quedan " + cfg.count;
+      const speedBase = 0.45 + wave * 0.14;
+      spawner = setInterval(() => {
+        if (spawned >= cfg.count) { clearInterval(spawner); return; }
+        spawnZombie(speedBase);
+        spawned++;
+      }, 480);
+      mover = setInterval(() => {
+        const { w, h } = arenaSize();
+        const cx = w / 2, cy = h * 0.55;
+        zombies.forEach((z) => {
+          if (z.dead) return;
+          z.wob += 0.12;
+          const dx = cx - z.x, dy = cy - z.y;
+          const d = Math.hypot(dx, dy) || 1;
+          if (d < 34) {
+            // llegó al fuego: retrocede empujado por las llamas (sin castigo)
+            z.x -= (dx / d) * 46; z.y -= (dy / d) * 46;
+            arena.classList.remove("arena-shake"); void arena.offsetWidth; arena.classList.add("arena-shake");
+            vibrate(24);
+          } else {
+            z.x += (dx / d) * z.speed + Math.sin(z.wob) * 0.5;
+            z.y += (dy / d) * z.speed + Math.cos(z.wob * 0.8) * 0.4;
+          }
+          z.el.style.left = z.x + "px";
+          z.el.style.top = z.y + "px";
+        });
+      }, 40);
+    }
+
+    function checkWave() {
+      if (alive > 0 || spawned < waveTotal) return;
+      clearInterval(mover); clearInterval(spawner);
+      const cfg = ep.waves[wave];
+      const last = wave >= ep.waves.length - 1;
+      const panel = document.createElement("div");
+      panel.className = "supply";
+      panel.innerHTML = `
+        <div>
+          <div class="sp-tag">ronda limpia · suministro asegurado</div>
+          <div class="sp-ico">${cfg.icon}</div>
+          <div class="sp-name">${esc(cfg.name)}</div>
+          <div class="sp-text">${esc(cfg.text)}</div>
+          <button class="btn" id="nextWave">${last ? "ver la tarjeta del episodio" : "siguiente ronda ▸"}</button>
         </div>`;
-      card.addEventListener("click", () => {
-        card.classList.toggle("flipped");
-        detail.textContent = it.text;
-        detail.classList.remove("fade-in"); void detail.offsetWidth; detail.classList.add("fade-in");
-        vibrate(12);
-        inspected.add(idx);
-        const pct = Math.round((inspected.size / ep.items.length) * 100);
-        $("#invBar").style.width = pct + "%";
-        $("#invPct").textContent = pct + "%";
-        if (inspected.size === ep.items.length) $("#invDoneWrap").classList.remove("hidden");
+      arena.appendChild(panel);
+      $("#nextWave").addEventListener("click", () => {
+        if (last) { showQuoteCard(ep); return; }
+        panel.remove();
+        wave++;
+        startWave();
       });
-      grid.appendChild(card);
-    });
+    }
 
     // chat del directo
     const chat = $("#chat");
@@ -647,92 +878,125 @@
       div.className = "msg";
       div.innerHTML = `<span class="u">${esc(ep.chatUser)}</span>: ${esc(ep.chat[ci % ep.chat.length])}`;
       chat.appendChild(div);
-      while (chat.children.length > 6) chat.removeChild(chat.firstChild);
+      while (chat.children.length > 5) chat.removeChild(chat.firstChild);
       ci++;
     };
     pushMsg(); pushMsg();
-    const chatTimer = setInterval(pushMsg, 2200);
-    cleanupFns.push(() => clearInterval(chatTimer));
+    const chatTimer = setInterval(pushMsg, 2400);
 
-    $("#invDone").addEventListener("click", () => showQuoteCard(ep));
+    cleanupFns.push(() => { clearInterval(mover); clearInterval(spawner); clearInterval(chatTimer); });
+    startWave();
   }
 
   /* ============================================================
-     E6 · SIX — cuerdas de luz que suenan (WebAudio)
+     E6 · SIX — LA MELODÍA INCOMPLETA.
+     Seis cuerdas afinadas para una melodía que sube y no resuelve:
+     le falta su última nota. La séptima cuerda está bloqueada
+     ("mañana"). La nota que falta suena recién en el E7, cuando
+     la frase se revela. El sonido ES la historia.
      ============================================================ */
   function epJam(ep) {
-    let line = 0;
-    const NOTES = [220.0, 261.63, 293.66, 329.63, 392.0, 440.0]; // pentatónica Am
     content.innerHTML = `
       <div class="ep-screen">
         ${epHeader(ep)}
         <div class="jam-stage">
-          <div class="vinyl"></div>
-          <div class="jam-line fade-in" id="jl">${esc(ep.lines[0])}</div>
+          <p class="jam-intro fade-in">${esc(ep.introLines[0])}</p>
+          <p class="jam-intro fade-in" style="animation-delay:.5s">${esc(ep.introLines[1])}</p>
           <div class="strings" id="strings">
-            ${NOTES.map(() => '<div class="string"><div class="wire"></div></div>').join("")}
+            ${MELODY.map((_, i) => `
+              <div class="string" data-i="${i}">
+                <div class="wire"></div>
+                <span class="num">${i + 1}</span>
+              </div>`).join("")}
+            <div class="string ghost" id="ghost">
+              <div class="wire"></div>
+              <span class="num">7</span>
+            </div>
           </div>
           <p class="hint">${esc(ep.hint)}</p>
-          <button class="btn ghost" id="jamNext" style="margin-top:16px">siguiente ▸</button>
+          <div class="jam-reveal" id="jamReveal"></div>
+          <div class="jam-seventh hidden" id="seventh">${esc(ep.seventhLabel)}</div>
+          <div class="hidden" id="jamDoneWrap" style="margin-top:18px">
+            <button class="btn" id="jamDone">ver la tarjeta del episodio</button>
+          </div>
         </div>
       </div>`;
 
-    // audio perezoso (iOS exige gesto del usuario)
-    let actx = null;
-    function pluckSound(freq) {
-      try {
-        if (!actx) actx = new (window.AudioContext || window.webkitAudioContext)();
-        if (actx.state === "suspended") actx.resume();
-        const t = actx.currentTime;
-        const osc = actx.createOscillator();
-        const gain = actx.createGain();
-        osc.type = "triangle";
-        osc.frequency.value = freq;
-        gain.gain.setValueAtTime(0.0001, t);
-        gain.gain.exponentialRampToValueAtTime(0.22, t + 0.012);
-        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.9);
-        osc.connect(gain).connect(actx.destination);
-        osc.start(t); osc.stop(t + 1);
-      } catch (e) { /* sin audio: la vibración visual basta */ }
+    const stringsEl = $("#strings");
+    const strings = [...stringsEl.querySelectorAll(".string:not(.ghost)")];
+    const ghost = $("#ghost");
+    const played = new Set();
+    const lastPluck = new Array(strings.length).fill(0);
+    let revealed = false;
+
+    function pluck(i) {
+      const nowMs = performance.now();
+      if (nowMs - lastPluck[i] < 150) return;
+      lastPluck[i] = nowMs;
+      const s = strings[i];
+      s.classList.remove("pluck"); void s.offsetWidth; s.classList.add("pluck");
+      s.classList.add("played");
+      playNote(MELODY[i], 0, 0.9, 0.22);
+      vibrate(8);
+      played.add(i);
+      if (played.size === strings.length && !revealed) {
+        revealed = true;
+        setTimeout(revealIncomplete, 900);
+      }
     }
 
-    const stringsEl = $("#strings");
-    const strings = [...stringsEl.querySelectorAll(".string")];
-    const lastPluck = new Array(strings.length).fill(0);
-    function pluckAt(clientX, clientY) {
+    function denyGhost() {
+      ghost.classList.remove("deny"); void ghost.offsetWidth; ghost.classList.add("deny");
+      const old = ghost.querySelector(".ghost-tip"); if (old) old.remove();
+      const tip = document.createElement("span");
+      tip.className = "ghost-tip";
+      tip.textContent = ep.lockedStringHint;
+      ghost.appendChild(tip);
+      setTimeout(() => tip.remove(), 1400);
+      vibrate([10, 30, 10]);
+    }
+
+    async function revealIncomplete() {
+      const jr = $("#jamReveal");
+      // vuelve a tocar la melodía completa (las 6), para que se escuche la subida…
+      MELODY.forEach((f, i) => playNote(f, i * 240, 0.7, 0.18));
+      await new Promise((r) => setTimeout(r, MELODY.length * 240 + 500));
+      if (!$("#jamReveal")) return;
+      jr.innerHTML = `<span class="fade-in">${esc(ep.afterStrum)}</span>`;
+      await new Promise((r) => setTimeout(r, 2400));
+      if (!$("#jamReveal")) return;
+      jr.innerHTML += `<span class="jr2 fade-in">${esc(ep.afterStrum2)}</span>`;
+      await new Promise((r) => setTimeout(r, 2000));
+      if (!$("#seventh")) return;
+      $("#seventh").classList.remove("hidden");
+      $("#seventh").classList.add("fade-in");
+      $("#jamDoneWrap").classList.remove("hidden");
+    }
+
+    function hitTest(clientX, clientY) {
       strings.forEach((s, i) => {
         const b = s.getBoundingClientRect();
-        if (clientX >= b.left - 4 && clientX <= b.right + 4 &&
-            clientY >= b.top && clientY <= b.bottom) {
-          const nowMs = performance.now();
-          if (nowMs - lastPluck[i] < 140) return;
-          lastPluck[i] = nowMs;
-          s.classList.remove("pluck"); void s.offsetWidth; s.classList.add("pluck");
-          pluckSound(NOTES[i]);
-          vibrate(8);
-        }
+        if (clientX >= b.left - 5 && clientX <= b.right + 5 &&
+            clientY >= b.top && clientY <= b.bottom) pluck(i);
       });
+      const g = ghost.getBoundingClientRect();
+      if (clientX >= g.left - 5 && clientX <= g.right + 5 &&
+          clientY >= g.top && clientY <= g.bottom) denyGhost();
     }
-    const pm = (e) => pluckAt(e.clientX, e.clientY);
-    const tm = (e) => { const t = e.touches[0]; if (t) pluckAt(t.clientX, t.clientY); };
+    const pm = (e) => hitTest(e.clientX, e.clientY);
+    const tm = (e) => { const t = e.touches[0]; if (t) hitTest(t.clientX, t.clientY); };
     stringsEl.addEventListener("pointerdown", pm);
     stringsEl.addEventListener("pointermove", (e) => { if (e.buttons || e.pressure > 0) pm(e); });
-    stringsEl.addEventListener("touchmove", tm, { passive: true });
     stringsEl.addEventListener("touchstart", tm, { passive: true });
-    cleanupFns.push(() => { try { actx && actx.close(); } catch (e) {} });
+    stringsEl.addEventListener("touchmove", tm, { passive: true });
 
-    const jl = $("#jl");
-    $("#jamNext").addEventListener("click", () => {
-      line++;
-      if (line < ep.lines.length) {
-        jl.textContent = ep.lines[line];
-        jl.classList.remove("fade-in"); void jl.offsetWidth; jl.classList.add("fade-in");
-      } else showQuoteCard(ep);
-    });
+    $("#jamDone").addEventListener("click", () => showQuoteCard(ep));
   }
 
   /* ============================================================
-     E7 · SEVEN — la revelación
+     E7 · SEVEN — la revelación. Las tarjetas vuelven, las palabras
+     se encienden, la frase se arma… y la melodía por fin resuelve:
+     suena la nota que faltaba desde el E6.
      ============================================================ */
   let skipResolve = null;
   const sleep = (ms) => new Promise((r) => {
@@ -749,6 +1013,7 @@
         <div class="reveal-intro" id="ri"></div>
         <div class="reveal-cards" id="rc"></div>
         <div class="phrase-final" id="pf">${esc(ep.phraseDisplay)}</div>
+        <div class="note-line" id="noteLine">${esc(ep.noteLine)}</div>
         <div class="final-msg hidden" id="fm"></div>
         <div class="final-cta hidden" id="cta"></div>
         <div class="credits hidden" id="credits"></div>
@@ -785,8 +1050,14 @@
     await sleep(3400);
     if (aborted()) return;
 
+    // La frase — y la melodía que por fin resuelve (la nota que faltaba)
     $("#pf").classList.add("on");
-    await sleep(3800);
+    MELODY.forEach((f, i) => playNote(f, i * 220, 0.6, 0.15));
+    playNote(MISSING_NOTE, MELODY.length * 220 + 80, 2.2, 0.22);
+    await sleep(2600);
+    if (aborted()) return;
+    $("#noteLine").classList.add("on");
+    await sleep(2600);
     if (aborted()) return;
 
     const skipHint = $("#skipHint"); if (skipHint) skipHint.remove();
@@ -811,7 +1082,7 @@
     cr.classList.remove("hidden"); cr.classList.add("fade-in");
   }
 
-  /* ---------- Arranque de la web ---------- */
+  /* ---------- Arranque ---------- */
   syncTime().then(renderHome);
   setInterval(() => { if (player.classList.contains("hidden")) renderHome(); }, 60000);
 })();
