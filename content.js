@@ -273,7 +273,7 @@ const EPISODES = [
       "Un heyfit — bebida oficial de la temporada",
       "Las tortugas — apoyo emocional",
       "",
-      "Escrita, dirigida y sentida por Dylan.",
+      "Escrita, dirigida y sentida por Dolan.",
     ],
   },
 ];
