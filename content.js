@@ -261,10 +261,10 @@ const EPISODES = [
       "Ari.\n\n" +
       "Esto nunca fue una serie. Es solo nuestro último año, contado como me gusta recordarlo.\n\n" +
       "Ya sabes lo que te dije hace un tiempo. Sigue siendo verdad, pero con los días se volvió " +
-      "algo más tranquilo y más serio a la vez. No es un crush que se pasa: es que me di cuenta " +
-      "de que los mejores capítulos de mi año tenían algo en común.\n\n" +
+      "algo más tranquilo y más serio a la vez. No es un crush que se pasa... es que me di cuenta " +
+      "de que los mejores capítulos de mi año, tenían algo en común.\n\n" +
       "No tienes que responder nada. No cambia nada de lo que somos si tú no quieres que cambie. " +
-      "Solo quería que lo supieras de una forma que estuviera a tu altura.",
+      "Solo quería que lo supieras de una forma que estuviera a tu altura (JAJAJA altura).",
     credits: [
       "ELENCO",
       "Pequeña Ari — como ella misma",
